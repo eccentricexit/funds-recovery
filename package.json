@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "ts-node-dev --respawn --pretty --transpile-only index.ts",
+    "anvil": "anvil --block-time 1",
     "postinstall": "typechain --target ethers-v5 out/**/*.json",
     "build": "forge build",
     "prettier-format": "prettier --config .prettierrc 'index.ts' --write"

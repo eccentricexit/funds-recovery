@@ -1,17 +1,11 @@
 import * as dotenv from 'dotenv';
-import { ethers, Wallet } from 'ethers';
+import { ethers } from 'ethers';
 import { abi, bytecode } from './out/RecoverReject.sol/RecoverReject.json';
 
 dotenv.config();
 
 const PROVIDER_URL = process.env.PROVIDER;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
-
-function sleep(s: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, s * 1000);
-  });
-}
 
 async function main() {
   if (!PROVIDER_URL || !PRIVATE_KEY) {
@@ -21,43 +15,58 @@ async function main() {
   const provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL);
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
-  // Setup
+  const walletBalanceBefore = await wallet.getBalance();
+  console.log(
+    'Current wallet balance:',
+    ethers.utils.formatUnits(walletBalanceBefore),
+    'ether'
+  );
 
-  const targetNonce = 116;
-  console.info('wallet address: ', wallet.address);
-  let nextNonce = await provider.getTransactionCount(wallet.address);
-  while (nextNonce < targetNonce) {
-    console.info('next tx nonce:', nextNonce);
+  const targetNonce = 117;
+  let nextTxNonce = await provider.getTransactionCount(wallet.address);
+
+  if (nextTxNonce >= targetNonce) {
+    console.info(
+      `Target nonce was already used. Next nonce: ${nextTxNonce}, target nonce: ${targetNonce}`
+    );
+    return;
+  }
+
+  while (nextTxNonce < targetNonce) {
     const tx = await wallet.sendTransaction({
       to: wallet.address,
       value: 0,
-      nonce: nextNonce
+      nonce: nextTxNonce
     });
 
-    console.info('Tx submitted, wait for an epoch');
+    console.info(
+      `Increasing next nonce to ${
+        nextTxNonce + 1
+      } sent. Waiting for many confs...`
+    );
+    await tx.wait(32);
+    console.info('Nonce increased');
     console.info();
 
-    await tx.wait(32); // Confirmations
-
-    nextNonce = await provider.getTransactionCount(wallet.address);
+    nextTxNonce = await provider.getTransactionCount(wallet.address);
   }
 
   console.info(
-    'next nonce: ',
-    await provider.getTransactionCount(wallet.address)
+    `Deploying contract with nonce ${nextTxNonce} and recovering funds.`
   );
-
-  console.info();
-  console.info();
   const factory = new ethers.ContractFactory(abi, bytecode, wallet);
   const contract = await factory.deploy({ nonce: targetNonce });
   await contract.deployTransaction.wait();
 
-  console.info('done, value recovered.');
-  console.log(
-    'current wallet balance',
-    ethers.utils.formatUnits(await wallet.getBalance())
+  const walletBalanceAfter = await wallet.getBalance();
+  console.info(`Done. `);
+  console.info(
+    `Recovered approximately ${ethers.utils.formatUnits(
+      walletBalanceAfter.sub(walletBalanceBefore)
+    )} ether`
   );
+
+  // TODO return funds.
 }
 
 main();
