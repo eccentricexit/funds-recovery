@@ -16,14 +16,25 @@ async function main() {
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
   const walletBalanceBefore = await wallet.getBalance();
-  console.log(
+  const targetNonce = Number(process.env.TARGET_NONCE);
+  let nextTxNonce = await provider.getTransactionCount(wallet.address);
+
+  console.info('Wallet:', wallet.address);
+  console.info(
     'Current wallet balance:',
     ethers.utils.formatUnits(walletBalanceBefore),
     'ether'
   );
-
-  const targetNonce = Number(process.env.TARGET_NONCE);
-  let nextTxNonce = await provider.getTransactionCount(wallet.address);
+  console.info(
+    `Will deploy recovery contract at nonce ${targetNonce}, address: ${ethers.utils.getContractAddress(
+      {
+        from: wallet.address,
+        nonce: targetNonce
+      }
+    )}`
+  );
+  console.info(`Next nonce: ${nextTxNonce}`);
+  console.info();
 
   if (nextTxNonce >= targetNonce) {
     console.info(
@@ -40,11 +51,9 @@ async function main() {
     });
 
     console.info(
-      `Increasing next nonce to ${
-        nextTxNonce + 1
-      } sent. Waiting for many confs...`
+      `Increasing next nonce to ${nextTxNonce + 1} sent. Waiting for confs...`
     );
-    await tx.wait(32);
+    await tx.wait(5);
     console.info('Nonce increased');
     console.info();
 
@@ -63,10 +72,8 @@ async function main() {
   console.info(
     `Recovered approximately ${ethers.utils.formatUnits(
       walletBalanceAfter.sub(walletBalanceBefore)
-    )} ether`
+    )} coins`
   );
-
-  // TODO return funds.
 }
 
 main();
