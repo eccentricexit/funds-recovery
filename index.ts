@@ -22,7 +22,7 @@ async function main() {
     'ether'
   );
 
-  const targetNonce = process.env.TARGET_NONCE;
+  const targetNonce = Number(process.env.TARGET_NONCE);
   let nextTxNonce = await provider.getTransactionCount(wallet.address);
 
   if (nextTxNonce >= targetNonce) {
