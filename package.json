@@ -7,8 +7,9 @@
     "start": "ts-node-dev --respawn --pretty --transpile-only index.ts",
     "anvil": "anvil --block-time 1",
     "postinstall": "typechain --target ethers-v5 out/**/*.json",
-    "build": "forge build",
-    "prettier-format": "prettier --config .prettierrc 'index.ts' --write"
+    "build": "forge build && typechain --target ethers-v5 out/**/*.json",
+    "prettier-format": "prettier --config .prettierrc 'index.ts' --write",
+    "test": "forge test -vvvv"
   },
   "devDependencies": {
     "@typechain/ethers-v5": "^10.2.0",
