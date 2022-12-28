@@ -53,13 +53,6 @@ async function main() {
   console.info(`Next nonce: ${nextTxNonce}`);
   console.info();
 
-  if (nextTxNonce >= targetNonce) {
-    console.info(
-      `Target nonce was already used. Next nonce: ${nextTxNonce}, target nonce: ${targetNonce}`
-    );
-    return;
-  }
-
   while (nextTxNonce < targetNonce) {
     const tx = await wallet.sendTransaction({
       to: wallet.address,
