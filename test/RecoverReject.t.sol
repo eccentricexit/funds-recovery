@@ -9,13 +9,12 @@ import '../src/RecoverReject.sol';
 contract RecoverRejectTest is Test {
     RecoverReject recoverReject;
     address payable immutable recoverRejectAddr =
-        payable(0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f);
+        payable(0x2e234DAe75C793f67A35089C9d99245E1C58470b);
 
     WETH weth;
 
     function setUp() public {
         payable(recoverRejectAddr).transfer(1 ether);
-        recoverReject = new RecoverReject();
 
         weth = new WETH();
         weth.deposit{value: 1 ether}();
@@ -23,6 +22,10 @@ contract RecoverRejectTest is Test {
     }
 
     function testRecoverTokens() public {
+        assertEq(recoverRejectAddr.balance, 1 ether);
+        recoverReject = new RecoverReject();
+        assertEq(recoverRejectAddr.balance, 0);
+
         assertEq(weth.balanceOf(recoverRejectAddr), 1 ether);
         recoverReject.arbitraryCall(
             payable(weth),
